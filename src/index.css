@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --editor-bg: #1a1b26;
+  --sidebar-bg: #16161e;
+  --header-bg: #1f2937;
+  --accent-color: #7c3aed;
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+}
+
+body {
+  background-color: var(--editor-bg);
+  color: var(--text-primary);
+}
+
+.monaco-editor {
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--sidebar-bg);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 4px;
+}
