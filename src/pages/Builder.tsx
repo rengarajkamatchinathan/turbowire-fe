@@ -10,17 +10,7 @@ import axios from 'axios';
 import { BACKEND_URL } from '../config';
 import { parseXml } from '../steps';
 import { useWebContainer } from '../hooks/useWebContainer';
-import { FileNode } from '@webcontainer/api';
 import { Loader } from '../components/Loader';
-
-const MOCK_FILE_CONTENT = `// This is a sample file content
-import React from 'react';
-
-function Component() {
-  return <div>Hello World</div>;
-}
-
-export default Component;`;
 
 export function Builder() {
   const location = useLocation();
@@ -36,7 +26,6 @@ export function Builder() {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   
   const [steps, setSteps] = useState<Step[]>([]);
-
   const [files, setFiles] = useState<FileItem[]>([]);
 
   useEffect(() => {
@@ -90,7 +79,6 @@ export function Builder() {
     })
 
     if (updateHappened) {
-
       setFiles(originalFiles)
       setSteps(steps => steps.map((s: Step) => {
         return {
@@ -191,9 +179,9 @@ export function Builder() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
-      <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-100">Website Builder</h1>
+    <div className="min-h-screen bg-[#1a1b26] flex flex-col">
+      <header className="bg-[#1f2937] border-b border-gray-700 px-6 py-4">
+        <h1 className="text-xl font-semibold text-purple-300">Website Builder</h1>
         <p className="text-sm text-gray-400 mt-1">Prompt: {prompt}</p>
       </header>
       
@@ -201,71 +189,77 @@ export function Builder() {
         <div className="h-full grid grid-cols-4 gap-6 p-6">
           <div className="col-span-1 space-y-6 overflow-auto">
             <div>
-              <div className="max-h-[75vh] overflow-scroll">
+              <div className="max-h-[75vh] overflow-scroll custom-scrollbar">
                 <StepsList
                   steps={steps}
                   currentStep={currentStep}
                   onStepClick={setCurrentStep}
                 />
               </div>
-              <div>
-                <div className='flex'>
-                  <br />
+              <div className="mt-4">
+                <div className='flex flex-col gap-2'>
                   {(loading || !templateSet) && <Loader />}
-                  {!(loading || !templateSet) && <div className='flex'>
-                    <textarea value={userPrompt} onChange={(e) => {
-                    setPrompt(e.target.value)
-                  }} className='p-2 w-full'></textarea>
-                  <button onClick={async () => {
-                    const newMessage = {
-                      role: "user" as "user",
-                      content: userPrompt
-                    };
+                  {!(loading || !templateSet) && (
+                    <>
+                      <textarea 
+                        value={userPrompt} 
+                        onChange={(e) => setPrompt(e.target.value)}
+                        className='p-3 w-full bg-[#1f2937] border border-gray-700 rounded-lg text-gray-200 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none resize-none'
+                        placeholder="Enter your next instruction..."
+                        rows={3}
+                      />
+                      <button 
+                        onClick={async () => {
+                          const newMessage = {
+                            role: "user" as "user",
+                            content: userPrompt
+                          };
 
-                    setLoading(true);
-                    const stepsResponse = await axios.post(`${BACKEND_URL}/chat`, {
-                      messages: [...llmMessages, newMessage]
-                    });
-                    setLoading(false);
+                          setLoading(true);
+                          const stepsResponse = await axios.post(`${BACKEND_URL}/chat`, {
+                            messages: [...llmMessages, newMessage]
+                          });
+                          setLoading(false);
 
-                    setLlmMessages(x => [...x, newMessage]);
-                    setLlmMessages(x => [...x, {
-                      role: "assistant",
-                      content: stepsResponse.data.response
-                    }]);
-                    
-                    setSteps(s => [...s, ...parseXml(stepsResponse.data.response).map(x => ({
-                      ...x,
-                      status: "pending" as "pending"
-                    }))]);
-
-                  }} className='bg-purple-400 px-4'>Send</button>
-                  </div>}
+                          setLlmMessages(x => [...x, newMessage]);
+                          setLlmMessages(x => [...x, {
+                            role: "assistant",
+                            content: stepsResponse.data.response
+                          }]);
+                          
+                          setSteps(s => [...s, ...parseXml(stepsResponse.data.response).map(x => ({
+                            ...x,
+                            status: "pending" as "pending"
+                          }))]);
+                        }} 
+                        className='bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg shadow-purple-500/30'
+                      >
+                        Send
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           </div>
           <div className="col-span-1">
-              <FileExplorer 
-                files={files} 
-                onFileSelect={setSelectedFile}
-              />
-            </div>
-          <div className="col-span-2 bg-gray-900 rounded-lg shadow-lg p-4 h-[calc(100vh-8rem)]">
+            <FileExplorer 
+              files={files} 
+              onFileSelect={setSelectedFile}
+            />
+          </div>
+          <div className="col-span-2 bg-[#16161e] rounded-lg shadow-xl p-4 h-[calc(100vh-8rem)] border border-gray-800">
             <TabView activeTab={activeTab} onTabChange={setActiveTab} />
             <div className="h-[calc(100%-4rem)]">
-              {/* {activeTab === 'code' ? (
-                <CodeEditor file={selectedFile} />
-              ) : (
-                <PreviewFrame webContainer={webcontainer} files={files} />
-              )} */}
               {activeTab === 'code' ? (
                 <CodeEditor file={selectedFile} />
               ) : (
                 webcontainer ? (
                   <PreviewFrame webContainer={webcontainer} files={files} />
                 ) : (
-                  <div className="text-center text-gray-400">Initializing WebContainer...</div>
+                  <div className="text-center text-gray-400 p-4">
+                    <div className="animate-pulse">Initializing WebContainer...</div>
+                  </div>
                 )
               )}
             </div>
