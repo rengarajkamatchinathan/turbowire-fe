@@ -34,8 +34,8 @@ export function Builder() {
     steps.filter(({status}) => status === "pending").map(step => {
       updateHappened = true;
       if (step?.type === StepType.CreateFile) {
-        let parsedPath = step.path?.split("/") ?? []; // ["src", "components", "App.tsx"]
-        let currentFileStructure = [...originalFiles]; // {}
+        let parsedPath = step.path?.split("/") ?? [];
+        let currentFileStructure = [...originalFiles];
         let finalAnswerRef = currentFileStructure;
   
         let currentFolder = ""
@@ -45,7 +45,6 @@ export function Builder() {
           parsedPath = parsedPath.slice(1);
   
           if (!parsedPath.length) {
-            // final file
             let file = currentFileStructure.find(x => x.path === currentFolder)
             if (!file) {
               currentFileStructure.push({
@@ -58,10 +57,8 @@ export function Builder() {
               file.content = step.code;
             }
           } else {
-            /// in a folder
             let folder = currentFileStructure.find(x => x.path === currentFolder)
             if (!folder) {
-              // create the folder
               currentFileStructure.push({
                 name: currentFolderName,
                 type: 'folder',
@@ -75,7 +72,6 @@ export function Builder() {
         }
         originalFiles = finalAnswerRef;
       }
-
     })
 
     if (updateHappened) {
@@ -85,10 +81,8 @@ export function Builder() {
           ...s,
           status: "completed"
         }
-        
       }))
     }
-    console.log(files);
   }, [steps, files]);
 
   useEffect(() => {
@@ -97,7 +91,6 @@ export function Builder() {
   
       const processFile = (file: FileItem, isRootFolder: boolean) => {  
         if (file.type === 'folder') {
-          // For folders, create a directory entry
           mountStructure[file.name] = {
             directory: file.children ? 
               Object.fromEntries(
@@ -113,7 +106,6 @@ export function Builder() {
               }
             };
           } else {
-            // For files, create a file entry with contents
             return {
               file: {
                 contents: file.content || ''
@@ -125,16 +117,12 @@ export function Builder() {
         return mountStructure[file.name];
       };
   
-      // Process each top-level file/folder
       files.forEach(file => processFile(file, true));
   
       return mountStructure;
     };
   
     const mountStructure = createMountStructure(files);
-  
-    // Mount the structure if WebContainer is available
-    console.log(mountStructure);
     webcontainer?.mount(mountStructure);
   }, [files, webcontainer]);
 
