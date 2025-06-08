@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Header } from '../components/Header';
 import { StepsList } from '../components/StepsList';
 import { FileExplorer } from '../components/FileExplorer';
 import { TabView } from '../components/TabView';
 import { CodeEditor } from '../components/CodeEditor';
 import { PreviewFrame } from '../components/PreviewFrame';
+import { ChatInterface } from '../components/ChatInterface';
 import { Step, FileItem, StepType } from '../types';
 import axios from 'axios';
 import { BACKEND_URL } from '../config';
 import { parseXml } from '../steps';
 import { useWebContainer } from '../hooks/useWebContainer';
-import { Loader } from '../components/Loader';
 
 export function Builder() {
   const location = useLocation();
@@ -162,91 +163,89 @@ export function Builder() {
     setLlmMessages(x => [...x, {role: "assistant", content: stepsResponse.data.response}])
   }
 
+  const handleSendMessage = async () => {
+    const newMessage = {
+      role: "user" as "user",
+      content: userPrompt
+    };
+
+    setLoading(true);
+    const stepsResponse = await axios.post(`${BACKEND_URL}/chat`, {
+      messages: [...llmMessages, newMessage]
+    });
+    setLoading(false);
+
+    setLlmMessages(x => [...x, newMessage]);
+    setLlmMessages(x => [...x, {
+      role: "assistant",
+      content: stepsResponse.data.response
+    }]);
+    
+    setSteps(s => [...s, ...parseXml(stepsResponse.data.response).map(x => ({
+      ...x,
+      status: "pending" as "pending"
+    }))]);
+
+    setPrompt("");
+  };
+
   useEffect(() => {
     init();
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#1a1b26] flex flex-col">
-      <header className="bg-[#1f2937] border-b border-gray-700 px-6 py-4">
-        <h1 className="text-xl font-semibold text-purple-300">Website Builder</h1>
-        <p className="text-sm text-gray-400 mt-1">Prompt: {prompt}</p>
-      </header>
+    <div className="min-h-screen bg-black cyber-grid">
+      <Header prompt={prompt} />
       
       <div className="flex-1 overflow-hidden">
-        <div className="h-full grid grid-cols-4 gap-6 p-6">
-          <div className="col-span-1 space-y-6 overflow-auto">
-            <div>
-              <div className="max-h-[75vh] overflow-scroll custom-scrollbar">
-                <StepsList
-                  steps={steps}
-                  currentStep={currentStep}
-                  onStepClick={setCurrentStep}
-                />
-              </div>
-              <div className="mt-4">
-                <div className='flex flex-col gap-2'>
-                  {(loading || !templateSet) && <Loader />}
-                  {!(loading || !templateSet) && (
-                    <>
-                      <textarea 
-                        value={userPrompt} 
-                        onChange={(e) => setPrompt(e.target.value)}
-                        className='p-3 w-full bg-[#1f2937] border border-gray-700 rounded-lg text-gray-200 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none resize-none'
-                        placeholder="Enter your next instruction..."
-                        rows={3}
-                      />
-                      <button 
-                        onClick={async () => {
-                          const newMessage = {
-                            role: "user" as "user",
-                            content: userPrompt
-                          };
-
-                          setLoading(true);
-                          const stepsResponse = await axios.post(`${BACKEND_URL}/chat`, {
-                            messages: [...llmMessages, newMessage]
-                          });
-                          setLoading(false);
-
-                          setLlmMessages(x => [...x, newMessage]);
-                          setLlmMessages(x => [...x, {
-                            role: "assistant",
-                            content: stepsResponse.data.response
-                          }]);
-                          
-                          setSteps(s => [...s, ...parseXml(stepsResponse.data.response).map(x => ({
-                            ...x,
-                            status: "pending" as "pending"
-                          }))]);
-                        }} 
-                        className='bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg shadow-purple-500/30'
-                      >
-                        Send
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
+        <div className="h-[calc(100vh-5rem)] grid grid-cols-12 gap-6 p-6">
+          {/* Left Sidebar - Steps */}
+          <div className="col-span-3 space-y-6 overflow-hidden">
+            <div className="h-3/5 overflow-auto custom-scrollbar">
+              <StepsList
+                steps={steps}
+                currentStep={currentStep}
+                onStepClick={setCurrentStep}
+              />
+            </div>
+            <div className="h-2/5">
+              <ChatInterface
+                userPrompt={userPrompt}
+                setPrompt={setPrompt}
+                onSend={handleSendMessage}
+                loading={loading}
+                disabled={!templateSet}
+              />
             </div>
           </div>
-          <div className="col-span-1">
+          
+          {/* File Explorer */}
+          <div className="col-span-3">
             <FileExplorer 
               files={files} 
               onFileSelect={setSelectedFile}
             />
           </div>
-          <div className="col-span-2 bg-[#16161e] rounded-lg shadow-xl p-4 h-[calc(100vh-8rem)] border border-gray-800">
+          
+          {/* Main Content Area */}
+          <div className="col-span-6 glass-effect rounded-xl p-6 border border-zinc-800">
             <TabView activeTab={activeTab} onTabChange={setActiveTab} />
-            <div className="h-[calc(100%-4rem)]">
+            <div className="h-[calc(100%-5rem)]">
               {activeTab === 'code' ? (
                 <CodeEditor file={selectedFile} />
               ) : (
                 webcontainer ? (
                   <PreviewFrame webContainer={webcontainer} files={files} />
                 ) : (
-                  <div className="text-center text-gray-400 p-4">
-                    <div className="animate-pulse">Initializing WebContainer...</div>
+                  <div className="h-full flex items-center justify-center bg-zinc-950/50 rounded-xl border border-zinc-800">
+                    <div className="text-center">
+                      <div className="loading-dots mb-4">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                      <p className="text-zinc-400">Initializing WebContainer...</p>
+                    </div>
                   </div>
                 )
               )}
