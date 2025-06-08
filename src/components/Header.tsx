@@ -16,7 +16,7 @@ export function Header({ prompt }: HeaderProps) {
               <Zap className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gradient">Bolt AI</h1>
+              <h1 className="text-xl font-bold text-gradient">Turbowire AI</h1>
               <div className="text-xs text-zinc-400">Website Builder</div>
             </div>
           </div>
