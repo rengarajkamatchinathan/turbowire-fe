@@ -42,7 +42,7 @@ export function Home() {
             </div>
             
             <h1 className="text-6xl font-bold mb-6">
-              <span className="text-gradient">Bolt AI</span>
+              <span className="text-gradient">Turbowire AI</span>
             </h1>
             <p className="text-xl text-zinc-300 mb-4 max-w-2xl mx-auto leading-relaxed">
               Transform your ideas into reality with AI-powered web development
